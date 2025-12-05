@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>load CSV dynamically</title>
+
+	<style>
+		.myTable {
+			border: 1px solid darkgray;
+		}
+
+		.myTable tr:nth-child(even) {
+		  background-color: #f2f2f2;
+		}
+	</style>
+
+	<script src="papaparse.js"></script>
+</head>
+<body>
+	<h1>load CSV dynamically Ver 2 - open the JS console </h1>
+	<p>Here I'm using the <a href="https://www.papaparse.com/docs#csv-to-json">Papa Parse library</a> to <i>parse</i> the CSV, and convert it into a JSON format</p>
+	<div id="Table_from_CSV">...</div>
+	<button id="the_btn">Click to load data</button>
+
+<script>
+	let theData = null;
+
+	document.querySelector("#the_btn").onclick = async function(){
+    let response = await fetch('incidence-of-child-labour.csv');
+    let data2 = await response.text();
+
+    // 1. Brug header: true, så dataen returneres som et array af objekter
+    // 2. Tving Papa Parse til at bruge Komma (,) som separator, som din fil bruger
+    let theData = Papa.parse(data2, { 
+        header: true,
+        delimiter: ',',
+        skipEmptyLines: true // God praksis
+    }).data; 
+    
+    console.table( theData ); // Tjek her, om dataen nu er renset
+
+    // Få kolonnenavnene ud fra den første post (hvis den findes)
+    if (theData.length === 0) {
+        document.querySelector("#Table_from_CSV").innerHTML = "Ingen data fundet.";
+        return;
+    }
+    
+    // Få kolonnenavnene fra nøglerne i det første dataobjekt
+    const headers = Object.keys(theData[0]); 
+    let table = '<table class="myTable">';
+    
+    // Opret overskriftsrækken (<thead>)
+    table += '<thead><tr>';
+    headers.forEach(header => {
+        table += `<th>${header}</th>`;
+    });
+    table += '</tr></thead>';
+
+    // Opret data-rækkerne (<tbody>)
+    table += '<tbody>';
+    theData.forEach(rowObject => {
+        table += '<tr>';
+        headers.forEach(headerKey => {
+            // Tilgå cellen via kolonnenavnet (nøgle)
+            table += `<td>${rowObject[headerKey]}</td>`; 
+        });
+        table += '</tr>';
+    });
+    table += '</tbody></table><br>';
+
+    document.querySelector("#Table_from_CSV").innerHTML = table;
+}
+</script>
+
+</body>
+</html>
